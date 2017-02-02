@@ -5,35 +5,46 @@
 #install.packages("jsonlite")
 library("httr")
 library("jsonlite")
+library(dplyr)
 
 
 ## For these questions, look at the API documentation to identify the appropriate endpoint and information.
 ## Then send GET() request to fetch the data, then extract the answer to the question
 
 # For what years does the API have statistical data?
-base.uri <- "http://data.unhcr.org"
-resource <- "/wiki/index.php/API_Documentation.html"
-response <- GET(paste(base.uri, resource))
-
+response <- GET("http://data.unhcr.org/api/stats/time_series_years.json")
+body <- fromJSON(content(response, "text"))
+print(body)
 
 # What is the "country code" for the "Syrian Arab Republic"?
+response <- GET("http://data.unhcr.org/api/countries/list.json")
+body <- fromJSON(content(response, "text"))
+filter(body, name_en == "Syrian Arab Republic") %>% 
+  select(country_code)
 
 
 # How many persons of concern from Syria applied for residence in the USA in 2013?
 # Hint: you'll need to use a query parameter
 # Use the `str()` function to print the data of interest
 # See http://www.unhcr.org/en-us/who-we-help.html for details on these terms
-
+query.params <- list(year = 2013, country_of_origin = "SYR", country_of_residence = "USA")
+response <- GET("http://data.unhcr.org/api/stats/persons_of_concern.json", query = query.params)
+body <- fromJSON(content(response, "text"))
+str(body)
 
 ## And this was only 2013...
 
 
 # How many *refugees* from Syria settled the USA in all years in the data set (2000 through 2013)?
 # Hint: check out the "time series" end points
+query.params <- list(population_type_code = "RF", country_of_origin = "SYR", country_of_residence = "USA")
+response <- GET("http://data.unhcr.org/api/stats/time_series_all_years.json", query = query.params)
+body <- fromJSON(content(response, "text"))
 
 
 # Use the `plot()` function to plot the year vs. the value.
 # Add `type="o"` as a parameter to draw a line
+plot(body$year, body$value, type = "o")
 
 
 
